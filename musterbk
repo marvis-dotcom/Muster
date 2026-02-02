@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUSTER // RAPID_PROTOCOL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap');
+        body { font-family: 'JetBrains+Mono', monospace; background: #050505; color: #fff; }
+        .bento { background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 16px; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .accent { color: #00ff41; }
+        .milestone-btn { border: 1px solid #262626; transition: all 0.2s; }
+        .milestone-btn.selected { border-color: #00ff41; color: #00ff41; background: rgba(0,255,65,0.05); }
+    </style>
+</head>
+<body class="pb-24">
+    <div id="app" class="max-w-md mx-auto p-6">
+        
+        <div id="setup" class="page">
+            <h1 class="text-3xl font-black italic mb-2 uppercase">Protocol_Init</h1>
+            <p class="text-zinc-500 text-[10px] mb-8 uppercase tracking-widest">Speed_Optimized_Commitment</p>
+            
+            <div class="bento p-6 mb-4">
+                <label class="text-[8px] text-zinc-500 uppercase block mb-2">Target_Objective</label>
+                <input type="text" id="mIn" placeholder="E.G. 60 DAYS OF CODE" class="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-xl font-bold uppercase outline-none focus:border-green-500">
+            </div>
+
+            <div class="bento p-6 mb-6">
+                <label class="text-[8px] text-zinc-500 uppercase block mb-4 text-center">Select_Cycle_Length</label>
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <button onclick="setTarget(7)" class="milestone-btn p-4 rounded-xl text-xs font-bold uppercase">7d</button>
+                    <button onclick="setTarget(30)" class="milestone-btn p-4 rounded-xl text-xs font-bold uppercase">30d</button>
+                    <button onclick="setTarget(60)" class="milestone-btn p-4 rounded-xl text-xs font-bold uppercase">60d</button>
+                </div>
+                <div class="flex items-center gap-4 px-2">
+                    <span class="text-[8px] text-zinc-500 uppercase">Custom:</span>
+                    <input type="number" id="dIn" value="7" min="7" class="bg-transparent border-b border-zinc-700 w-full text-center font-bold accent outline-none">
+                </div>
+            </div>
+
+            <button onclick="init()" class="w-full bg-white text-black py-5 rounded-xl font-black italic uppercase">Lock_Protocol</button>
+        </div>
+
+        <div id="home" class="page">
+            <header class="flex justify-between items-center mb-10">
+                <div class="max-w-[70%]">
+                    <p id="mLabel" class="text-[10px] accent font-bold tracking-tighter uppercase truncate"></p>
+                    <h1 class="text-2xl font-black italic tracking-tighter uppercase">Muster_Log</h1>
+                </div>
+                <button onclick="wipe()" class="text-[8px] text-zinc-700 hover:text-red-500 font-bold uppercase underline">System_Reset</button>
+            </header>
+
+            <div class="bento p-10 text-center mb-6">
+                <h2 id="sDisp" class="text-9xl font-black tracking-tighter">00</h2>
+                <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">/ <span id="targetDisp">--</span> DAYS</p>
+            </div>
+
+            <div class="bento p-4 mb-6">
+                <div class="flex justify-between text-[8px] text-zinc-500 uppercase mb-2 font-bold tracking-widest">
+                    <span>Reliability_Index</span>
+                    <span id="pText" class="accent">0%</span>
+                </div>
+                <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden">
+                    <div id="pBar" class="bg-green-500 h-full w-0 transition-all duration-1000"></div>
+                </div>
+            </div>
+
+            <button onclick="document.getElementById('cam').click()" id="mainBtn" class="w-full bg-white text-black py-6 rounded-2xl font-black uppercase italic text-xl active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                SUBMIT_PROOF
+            </button>
+        </div>
+
+        <div id="vault" class="page">
+            <h2 class="text-xl font-black italic mb-6 tracking-tighter uppercase">// EVIDENCE_VAULT</h2>
+            <div id="hist" class="space-y-4"></div>
+        </div>
+
+        <nav class="fixed bottom-0 left-0 right-0 h-20 bg-black border-t border-zinc-900 flex justify-around items-center px-10 z-50">
+            <button onclick="nav('home')" id="n-home" class="font-bold text-[10px] text-zinc-500 uppercase tracking-widest">Core</button>
+            <button onclick="nav('vault')" id="n-vault" class="font-bold text-[10px] text-zinc-500 uppercase tracking-widest">Vault</button>
+        </nav>
+    </div>
+
+    <input type="file" id="cam" accept="image/*" capture="camera" class="hidden" onchange="snap(this)">
+
+    <script>
+        let state = JSON.parse(localStorage.getItem('muster_v5')) || { s:0, h:[], l:null, m:'', target:7 };
+
+        function setTarget(val) {
+            document.getElementById('dIn').value = val;
+            document.querySelectorAll('.milestone-btn').forEach(b => {
+                b.classList.remove('selected');
+                if(b.innerText === val + 'd') b.classList.add('selected');
+            });
+        }
+
+        function nav(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('accent'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('n-'+id).classList.add('accent');
+            render();
+        }
+
+        function init() {
+            const m = document.getElementById('mIn').value;
+            const d = document.getElementById('dIn').value;
+            if(!m) return alert("MISSION_DATA_REQUIRED");
+            state.m = m.toUpperCase();
+            state.target = parseInt(d);
+            save(); nav('home');
+        }
+
+        function snap(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const today = new Date().toISOString().split('T')[0];
+            if(state.l === today) return alert("DAILY_ENTRY_COMPLETE");
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.h.unshift({ img: e.target.result, d: today, t: new Date().toLocaleTimeString() });
+                state.s++;
+                state.l = today;
+                save(); render();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function save() { localStorage.setItem('muster_v5', JSON.stringify(state)); }
+        function wipe() { if(confirm("PERMANENTLY WIPE ARCHIVE?")) { localStorage.clear(); location.reload(); } }
+
+        function render() {
+            if(!state.m) return nav('setup');
+            document.getElementById('mLabel').innerText = state.m;
+            document.getElementById('targetDisp').innerText = state.target;
+            document.getElementById('sDisp').innerText = String(state.s).padStart(2, '0');
+            
+            const progress = (state.s / state.target) * 100;
+            document.getElementById('pBar').style.width = Math.min(progress, 100) + '%';
+            document.getElementById('pText').innerText = Math.min(progress, 100).toFixed(1) + '%';
+
+            const btn = document.getElementById('mainBtn');
+            if(state.l === new Date().toISOString().split('T')[0]) {
+                btn.innerText = "LOCKED"; btn.disabled = true; btn.style.opacity = "0.2";
+            } else {
+                btn.innerText = "SUBMIT_PROOF"; btn.disabled = false; btn.style.opacity = "1";
+            }
+
+            document.getElementById('hist').innerHTML = state.h.map(i => `
+                <div class="bento p-4 flex gap-4 items-center">
+                    <img src="${i.img}" class="w-20 h-20 rounded-xl object-cover grayscale border border-zinc-800">
+                    <div>
+                        <p class="text-[8px] text-zinc-600 uppercase font-bold">${i.d} @ ${i.t}</p>
+                        <p class="text-xs font-black uppercase italic tracking-tighter">Verified_Entry</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        nav(state.m ? 'home' : 'setup');
+    </script>
+</body>
+</html>
